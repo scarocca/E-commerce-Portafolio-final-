@@ -1,53 +1,76 @@
 package cl.sergiocarocca.cita_ideal_cl.entity;
 
-
-
-
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+/**
+ * Entidad que representa la reserva de un servicio por parte de un cliente.
+ * Almacena la información de contacto, el plan seleccionado, la fecha de la cita
+ * y un código único de seguimiento para la gestión administrativa.
+ * * @author Sergio Carocca
+ * @version 1.0
+ */
 @Entity
 @Table(name = "reservas")
 public class Reserva {
 
+    /** Identificador único autoincremental de la reserva. */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Relación con el Plan (Muchos reservas pueden pertenecer a un Plan)
+    /** * Relación con el Plan de servicio seleccionado.
+     * Se utiliza FetchType.LAZY para optimizar el rendimiento cargando el plan bajo demanda.
+     */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "plan_id", nullable = false)
     private Plan plan;
 
-    // Datos del Cliente
+    /** Nombre completo del cliente que realiza la reserva. */
     @Column(nullable = false)
     private String nombreCliente;
 
+    /** Correo electrónico de contacto del cliente. */
     @Column(nullable = false)
     private String emailCliente;
 
+    /** Número de teléfono de contacto para coordinar la cita. */
     @Column(nullable = false)
     private String telefonoCliente;
 
-    // Fecha y Hora de la cita
+    /** Fecha y hora programada para la prestación del servicio. */
     @Column(nullable = false)
     private LocalDateTime fechaCita;
 
-    // Control de estado
-    private String estado = "PENDIENTE"; // PENDIENTE, CONFIRMADA, CANCELADA
+    /** * Estado actual de la reserva. 
+     * Los valores posibles son: PENDIENTE, CONFIRMADA, CANCELADA.
+     */
+    private String estado = "PENDIENTE"; 
     
+    /** * Código alfanumérico único para que el cliente identifique su reserva. 
+     */
     private String codigoSeguimiento;
 
-    // 1. CONSTRUCTOR VACÍO (Obligatorio para JPA)
+    /**
+     * Constructor por defecto requerido por JPA.
+     * Inicializa automáticamente un código de seguimiento único basado en UUID.
+     */
     public Reserva() {
-        // Generamos un código de seguimiento único al azar
+        // Generamos un código de seguimiento único al azar (primeros 8 caracteres)
         this.codigoSeguimiento = UUID.randomUUID().toString().substring(0, 8).toUpperCase();
     }
 
-    // 2. CONSTRUCTOR CON PARÁMETROS (Para tu comodidad)
+    /**
+     * Constructor con parámetros para facilitar la creación de reservas desde los servicios.
+     * * @param plan El servicio seleccionado.
+     * @param nombreCliente Nombre del titular.
+     * @param emailCliente Correo de contacto.
+     * @param telefonoCliente Teléfono de contacto.
+     * @param fechaCita Fecha y hora de la cita.
+     */
     public Reserva(Plan plan, String nombreCliente, String emailCliente, String telefonoCliente, LocalDateTime fechaCita) {
-        this(); // Llama al constructor vacío para el UUID
+        this(); // Invoca al constructor vacío para asegurar la generación del código de seguimiento
         this.plan = plan;
         this.nombreCliente = nombreCliente;
         this.emailCliente = emailCliente;
@@ -55,7 +78,8 @@ public class Reserva {
         this.fechaCita = fechaCita;
     }
 
-    // 3. GETTERS Y SETTERS
+    // --- Métodos Getter y Setter ---
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 

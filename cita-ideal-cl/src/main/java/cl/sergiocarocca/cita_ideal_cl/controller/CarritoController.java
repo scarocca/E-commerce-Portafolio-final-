@@ -18,29 +18,38 @@ import cl.sergiocarocca.cita_ideal_cl.entity.Reserva;
 import cl.sergiocarocca.cita_ideal_cl.service.PlanService;
 import jakarta.servlet.http.HttpSession;
 
+/**
+ * Controlador para gestionar el carrito de compras de la aplicación.
+ * Utiliza la sesión HTTP para persistir los ítems seleccionados por el usuario
+ * antes de proceder al proceso de reserva o checkout.
+ * * @author Sergio Carocca
+ * @version 1.0
+ */
 @Controller
 @RequestMapping("/carrito")
 public class CarritoController {
 
     @Autowired
-    private PlanService planService; // Tu servicio para buscar planes en la BD
+    private PlanService planService;
 
+    /**
+     * Agrega un plan al carrito de compras. Si el plan ya existe en la sesión,
+     * incrementa su cantidad; de lo contrario, crea un nuevo registro.
+     * * @param id Identificador único del plan a agregar.
+     * @param session Sesión HTTP para almacenar la lista de ítems.
+     * @return Redirección a la vista detallada del carrito.
+     */
     @GetMapping("/agregar/{id}")
     public String agregarAlCarrito(@PathVariable Long id, HttpSession session) {
-        // 1. Obtener el carrito de la sesión. Si no existe, creamos una lista nueva.
-    	@SuppressWarnings("unchecked")
+        @SuppressWarnings("unchecked")
         List<ItemCarrito> carrito = (List<ItemCarrito>) session.getAttribute("carrito");
         if (carrito == null) {
             carrito = new ArrayList<>();
         }
-        
-        
 
-        // 2. Buscar el plan en la base de datos
         Plan planDeseado = planService.buscarPorId(id);
 
         if (planDeseado != null) {
-            // 3. Verificar si el plan ya está en el carrito para solo aumentar la cantidad
             boolean existe = false;
             for (ItemCarrito item : carrito) {
                 if (item.getPlan().getId().equals(id)) {
@@ -50,22 +59,24 @@ public class CarritoController {
                 }
             }
 
-            // 4. Si no existe, lo agregamos como nuevo item
             if (!existe) {
                 carrito.add(new ItemCarrito(planDeseado, 1));
             }
         }
 
-        // 5. Guardar la lista actualizada en la sesión
         session.setAttribute("carrito", carrito);
-
-        // 6. Redirigir a la vista del carrito
         return "redirect:/carrito/ver";
     }
 
+    /**
+     * Recupera el contenido actual del carrito de la sesión y calcula el total acumulado.
+     * * @param model Objeto para enviar la lista de ítems y el cálculo del total a la vista.
+     * @param session Sesión HTTP donde reside el carrito.
+     * @return El nombre de la plantilla HTML para visualizar el carrito.
+     */
     @GetMapping("/ver")
     public String verCarrito(Model model, HttpSession session) {
-    	@SuppressWarnings("unchecked")
+        @SuppressWarnings("unchecked")
         List<ItemCarrito> carrito = (List<ItemCarrito>) session.getAttribute("carrito");
         if (carrito == null) {
             carrito = new ArrayList<>();
@@ -74,7 +85,6 @@ public class CarritoController {
         int itemsCount = (carrito != null) ? carrito.size() : 0;
         model.addAttribute("itemsCount", itemsCount);
 
-        // Calcular el Gran Total sumando los BigDecimal
         BigDecimal total = carrito.stream()
                 .map(ItemCarrito::getSubtotal)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -82,37 +92,49 @@ public class CarritoController {
         model.addAttribute("carrito", carrito);
         model.addAttribute("totalCarrito", total);
 
-        return "carrito-vista"; // nombre de tu archivo HTML
+        return "carrito-vista";
     }
-    
+
+    /**
+     * Remueve un ítem específico del carrito basado en el ID del plan.
+     * * @param id Identificador del plan que se desea quitar del carrito.
+     * @param session Sesión HTTP actualizada.
+     * @return Redirección a la vista del carrito tras la eliminación.
+     */
     @GetMapping("/eliminar/{id}")
     public String eliminarDelCarrito(@PathVariable Long id, HttpSession session) {
-    	@SuppressWarnings("unchecked")
+        @SuppressWarnings("unchecked")
         List<ItemCarrito> carrito = (List<ItemCarrito>) session.getAttribute("carrito");
         
         if (carrito != null) {
-            // Usamos removeIf para eliminar el item cuyo plan tenga el ID recibido
             carrito.removeIf(item -> item.getPlan().getId().equals(id));
-            
-            // Actualizamos la sesión con la lista modificada
             session.setAttribute("carrito", carrito);
         }
         
         return "redirect:/carrito/ver";
     }
-    
+
+    /**
+     * Limpia completamente el carrito de la sesión del usuario.
+     * * @param session Sesión HTTP a la cual se le removerá el atributo "carrito".
+     * @return Redirección a la vista del carrito vacío.
+     */
     @GetMapping("/vaciar")
     public String vaciarCarrito(HttpSession session) {
-        // Podemos simplemente remover el atributo de la sesión
         session.removeAttribute("carrito");
-        
-        // Opcional: También podrías hacer carrito.clear() si prefieres mantener la lista vacía
-        
         return "redirect:/carrito/ver";
     }
+
+    /**
+     * Prepara la información necesaria para el proceso final de reserva,
+     * calculando montos y enviando un objeto Reserva vacío para el formulario.
+     * * @param session Sesión HTTP para validar si el carrito tiene ítems.
+     * @param model Objeto para pasar los datos de la compra al formulario final.
+     * @return La vista de confirmación de reserva o redirección si el carrito está vacío.
+     */
     @GetMapping("/checkout")
     public String irACheckout(HttpSession session, Model model) {
-    	@SuppressWarnings("unchecked")
+        @SuppressWarnings("unchecked")
         List<ItemCarrito> carrito = (List<ItemCarrito>) session.getAttribute("carrito");
 
         if (carrito == null || carrito.isEmpty()) {
@@ -127,7 +149,6 @@ public class CarritoController {
         model.addAttribute("carrito", carrito); 
         model.addAttribute("totalCarrito", total);
         
-        // AQUÍ: Apuntamos al nuevo archivo que creamos
         return "public/reserva-confirmacion-carrito"; 
     }
 }

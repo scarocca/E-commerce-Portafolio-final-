@@ -10,6 +10,13 @@ import cl.sergiocarocca.cita_ideal_cl.entity.Consulta;
 import cl.sergiocarocca.cita_ideal_cl.repository.ConsultaRepository;
 import cl.sergiocarocca.cita_ideal_cl.service.PlanService;
 
+/**
+ * Controlador encargado de gestionar las interacciones del formulario de contacto.
+ * Procesa las inquietudes de los usuarios y permite vincular consultas a planes
+ * específicos de servicios ofrecidos en la plataforma.
+ * * @author Sergio Carocca
+ * @version 1.0
+ */
 @Controller
 public class ContactoController {
 
@@ -19,6 +26,17 @@ public class ContactoController {
     @Autowired
     private PlanService planService;
 
+    /**
+     * Procesa y almacena una nueva consulta enviada por un usuario.
+     * Si se proporciona un ID de plan válido, la consulta queda vinculada a dicho plan
+     * para una atención personalizada.
+     * * @param nombre Nombre del remitente de la consulta.
+     * @param email Dirección de correo electrónico para contacto posterior.
+     * @param planId (Opcional) Identificador del plan por el cual el usuario está interesado.
+     * @param mensaje Contenido detallado de la consulta o inquietud.
+     * @param redirect Objeto para enviar mensajes de éxito (flash attributes) tras la redirección.
+     * @return Redirección a la página de inicio con un mensaje de confirmación.
+     */
     @PostMapping("/contacto/enviar")
     public String procesarConsulta(@RequestParam String nombre,
                                    @RequestParam String email,

@@ -16,6 +16,13 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.UUID;
 
+/**
+ * Controlador administrativo para la gestión de la galería de imágenes.
+ * Proporciona endpoints para subir nuevas fotografías, eliminarlas del sistema
+ * y visualizar el listado de archivos multimedia gestionados.
+ * * @author Sergio Carocca
+ * @version 1.0
+ */
 @Controller
 @RequestMapping("/admin/galeria")
 public class AdminGaleriaController {
@@ -23,14 +30,25 @@ public class AdminGaleriaController {
     @Autowired
     private FotoService fotoService;
 
-    // Método para mostrar el formulario
+    /**
+     * Muestra la interfaz del formulario para la carga de nuevas imágenes.
+     * * @return El nombre de la plantilla HTML para el formulario de subida.
+     */
     @GetMapping("/nuevo")
     public String formularioSubida() {
         return "admin/galeria-subir";
     }
 
+    /**
+     * Procesa la subida de una imagen, genera un identificador único para el archivo,
+     * lo almacena en el sistema de archivos local y registra la información en la base de datos.
+     * * @param titulo El título descriptivo de la fotografía.
+     * @param archivo El objeto MultipartFile que contiene los datos binarios de la imagen.
+     * @param flash Atributos para mensajes de retroalimentación (éxito/error) tras la redirección.
+     * @return Redirección a la vista de gestión o al formulario en caso de error.
+     */
     @PostMapping("/guardar")
-    public String guardarFoto(@RequestParam("titulo") String titulo,
+    public String guardarFoto(@RequestParam String titulo,
                              @RequestParam("archivoImagen") MultipartFile archivo,
                              RedirectAttributes flash) {
         
@@ -72,12 +90,25 @@ public class AdminGaleriaController {
 
         return "admin/galeria-gestion";
     }
+
+    /**
+     * Elimina una fotografía tanto del registro en la base de datos como del almacenamiento físico.
+     * * @param id El identificador único de la foto a eliminar.
+     * @param flash Atributos para enviar mensajes de confirmación de eliminación.
+     * @return Redirección a la lista de gestión de galería.
+     */
     @GetMapping("/eliminar/{id}")
     public String eliminar(@PathVariable Long id, RedirectAttributes flash) {
         fotoService.eliminarFotoCompleta(id);
         flash.addFlashAttribute("success", "La foto y su archivo han sido eliminados.");
-        return "redirect:/admin/galeria/gestion"; // O a donde tengas tu lista de fotos
+        return "redirect:/admin/galeria/gestion"; 
     }
+
+    /**
+     * Carga y muestra el panel de gestión con todas las imágenes registradas.
+     * * @param model Objeto para inyectar la lista de fotos y estadísticas en la vista.
+     * @return El nombre de la plantilla HTML para la gestión de la galería.
+     */
     @GetMapping("/gestion")
     public String gestionarGaleria(Model model) {
         // Reutilizamos el servicio para traer todas las fotos
